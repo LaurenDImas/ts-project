@@ -20,7 +20,7 @@ const MainContent = () => {
     const [filter, setFilter] = useState<string>("all");
     const [currentPage, setCurrentPage] = useState<number>(1);
     const [dropdownOpen, setDropdownOpen] = useState(false);
-    const itemsPerPage = 12;
+    const itemsPerPage = 20;
     
     useEffect(() => {
         let url = `https://dummyjson.com/products?limit=${itemsPerPage}&skip=${(currentPage-1) * itemsPerPage}`;
@@ -78,11 +78,67 @@ const MainContent = () => {
     
     const filteredProducts = getFilterProducts();
     
+    // TODO: TOTAL DATA
     const totalProducts = totalProduct;
+    
+    // TODO: TOTAL HALAMAN
     const totalPages = Math.ceil(totalProducts / itemsPerPage);
     
+    // TODO: HANDLE CHANGE
+    const handlePageChange = (page: number) => {
+        if (page < 1 || page > totalPages) return;
+        setCurrentPage(page);
+    }
+    
+    // TODO: AMBIL LIST NOMOR PAGE
     const getPaginationButton = () => {
-        const buttons: number[] = [];
+        const pages = [];
+        const maxVisible: number = 5;
+        
+        let startPage = currentPage - Math.floor(maxVisible / 2);
+        if (startPage < 1) {
+            startPage = 1;
+        }
+        
+        let endPage = startPage + maxVisible - 1;
+        if (endPage > totalPages) {
+            endPage = totalPages;
+            startPage = Math.max(1, (endPage - maxVisible) + 1);
+        }
+        
+        // Doted
+        if (startPage > 1) {
+            // Selalu tampilkan halaman 1
+            pages.push(1);
+            
+            // Kalau jaraknya lebih dari 1 langkah, kasih "..."
+            // Contoh: startPage = 4 -> akan jadi: 1 ... 4 5 6
+            
+            if (startPage > 2) {
+                pages.push('dots');
+            }
+        }
+        
+        // 2. Halaman utama dari startPage sampai endPage
+        for (let page = startPage; page <= endPage; page++) {
+            pages.push(page);
+        }
+        
+        // 3. Bagian kanan (akhir)
+        if (endPage < totalPages) {
+            // Kalau masih ada jarak lebih dari 1 halaman ke totalPages, kasih "..."
+            // Contoh: endPage = 7, totalPages = 10 ->  ... 7 8 9 ... 10
+            if (endPage < totalPages - 1) {
+                pages.push('dots');
+            }
+            
+            // Selalu tampilkan halaman terakhir
+            pages.push(totalPages);
+        }
+        
+        
+        return pages;
+        // TODO: 2. Selalu tampilkan halaman pertama
     }
     return (
         <section className="
@@ -95,7 +151,6 @@ const MainContent = () => {
             <div className="mb-5">
                 <div className="flex flex-column sm:flex-row justify-between items-center">
                     <div className="relative mb-5 mt-5">
-                        {getPaginationButton()}
                         <button onClick={() => setDropdownOpen(!dropdownOpen)} className="border px-4 py-2 rounded-full flex items-center">
                             <Tally3 className="mr-2" />
                             {filter === "all" ? 'Filter' :
@@ -123,22 +178,28 @@ const MainContent = () => {
                         )}
                     </div>
                 </div>
-                <div className="grid grid-cols-4 sm:grid-cols-3 md:grid-cols-4 gap-5">
-                    {filteredProducts.map((product) => (
-                        <BookCard
-                            key={product.id}
-                            id={product.id}
-                            title={product.title}
-                            image={product.thumbnail}
-                            price={product.price}
-                        />
-                    ))}
-                </div>
                 
-                <div className="flex flex-col sm:flex-row justify-between items-center mt-5">
-                    {/*<button onClick={() => handlePageChange(currentPage-1)}*/}
-                    {/*        disabled={currentPage === 1}*/}
-                    {/*        className="boder px-4 py-2 mx-2 rounded-full">Previous</button>*/}
+                <div className="flex flex-col sm:flex-row justify-between items-center my-5">
+                    
+                    <button onClick={() => handlePageChange(currentPage - 1)}
+                            disabled={currentPage === 1}
+                            className="border px-4 py-2 mx-2 rounded-full">Previous</button>
+                    
+                    <div className="flex flex-wrap jutify-center items-end">
+                        {getPaginationButton().map((page, index) => {
+                            return page === "dots" ? <p className="font-bold">...</p> : (<button
+                                        key={index}
+                                        onClick={() => handlePageChange(page)}
+                                        className={`border px-4 py-2 mx-2 rounded-full ${
+                                            page === currentPage ? "bg-black text-white" : ""
+                                        }`}
+                                    >{page}</button>)
+                        })}
+                    </div>
+                    
+                    <button onClick={() => handlePageChange(currentPage + 1)}
+                            disabled={currentPage === totalPages}
+                            className="border px-4 py-2 mx-2 rounded-full">Next</button>
                     
                     {/*<div className="flex flex-wrap jutify-center">*/}
                     {/*    {getPaginationButton().map((page) => {*/}
@@ -154,10 +215,20 @@ const MainContent = () => {
                     {/*    })}*/}
                     {/*</div>*/}
                     
-                    {/*<button onClick={() => handlePageChange(currentPage+1)}*/}
-                    {/*        disabled={currentPage === totalPages}*/}
-                    {/*        className="boder px-4 py-2 mx-2 rounded-full">Next</button>*/}
                 </div>
+                
+                <div className="grid grid-cols-4 sm:grid-cols-3 md:grid-cols-4 gap-5">
+                    {filteredProducts.map((product) => (
+                        <BookCard
+                            key={product.id}
+                            id={product.id}
+                            title={product.title}
+                            image={product.thumbnail}
+                            price={product.price}
+                        />
+                    ))}
+                </div>
+                
             </div>
         </section>
     )
